@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>CyberShield: Packet Defender — HTML5 Canvas Mini Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="app-shell">
+    <!-- HEADER GAME -->
+    <header class="game-header">
+      <div class="brand-group">
+        <div class="brand-logo">CS</div>
+        <div>
+          <h1 class="brand-title">CyberShield: Packet Defender</h1>
+          <p class="brand-subtitle">HTML5 Canvas Arcade • Portofolio Sistem Informasi</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-sound" type="button" class="btn-secondary" title="Aktifkan/Matikan Suara">
+          <span id="sound-icon">🔊</span>
+          <span id="sound-label" class="hide-mobile">Suara</span>
+        </button>
+        <button id="btn-leaderboard" type="button" class="btn-secondary">
+          <span>🏆</span>
+          <span>Top Skor</span>
+        </button>
+        <button id="btn-pause" type="button" class="btn-secondary" disabled>
+          <span>⏸</span>
+          <span class="hide-mobile">Jeda</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- HUD (HEADS-UP DISPLAY) STATISTIK REAL-TIME -->
+    <section class="hud-bar" aria-label="Status Permainan">
+      <div class="hud-card">
+        <span class="hud-label">SKOR</span>
+        <span id="hud-score" class="hud-value text-emerald">0</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">COMBO</span>
+        <span id="hud-combo" class="hud-value text-cyan">x1</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">WAVE</span>
+        <span id="hud-wave" class="hud-value">1</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">POWER-UP</span>
+        <span id="hud-powerup" class="hud-value text-amber">Normal</span>
+      </div>
+      <div class="hud-card">
+        <span class="hud-label">INTEGRITAS SERVER</span>
+        <span id="hud-lives" class="hud-value text-rose">❤️❤️❤️</span>
+      </div>
+    </section>
+
+    <!-- AREA CANVAS UTAMA + OVERLAY MENU -->
+    <main class="canvas-wrapper">
+      <canvas id="game-canvas" width="800" height="500"></canvas>
+
+      <!-- OVERLAY 1: LAYAR MULAI -->
+      <div id="overlay-start" class="canvas-overlay">
+        <div class="overlay-card">
+          <span class="badge-pill">MISI KEAMANAN JARINGAN</span>
+          <h2>Pertahankan Server dari Serangan Malware!</h2>
+
+          <div class="legend-grid">
+            <div class="legend-item">
+              <span class="dot dot-green"></span>
+              <span><strong>Data Paket:</strong> Tangkap (+15 Poin & Combo)</span>
+            </div>
+            <div class="legend-item">
+              <span class="dot dot-red"></span>
+              <span><strong>Trojan Bug:</strong> Tembak jatuh (+25 Poin)</span>
+            </div>
+            <div class="legend-item">
+              <span class="dot dot-purple"></span>
+              <span><strong>Ransomware:</strong> 2x tembakan (+60 Poin)</span>
+            </div>
+            <div class="legend-item">
+              <span class="dot dot-cyan"></span>
+              <span><strong>Patch Core:</strong> Dual Laser / Pulihkan Nyawa</span>
+            </div>
+          </div>
+
+          <div class="setup-row">
+            <div class="input-group">
+              <label for="player-name-input">Nama Operator</label>
+              <input id="player-name-input" type="text" maxlength="18" value="Player 1" placeholder="Masukkan nama..." />
+            </div>
+            <div class="input-group">
+              <label for="difficulty-select">Tingkat Ancaman</label>
+              <select id="difficulty-select">
+                <option value="normal">Normal</option>
+                <option value="hardcore">Hardcore (Cepat)</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="btn-start-game" type="button" class="btn-primary">
+            Mulai Pertahanan Server
+          </button>
+          <p class="control-hint">Kontrol: Panah Kiri/Kanan atau A/D untuk bergerak • Spasi untuk menembak</p>
+        </div>
+      </div>
+
+      <!-- OVERLAY 2: LAYAR JEDA (PAUSE) -->
+      <div id="overlay-pause" class="canvas-overlay hidden">
+        <div class="overlay-card compact">
+          <span class="badge-pill">SISTEM DIJEDA</span>
+          <h2>Simulasi Pertahanan Dijeda</h2>
+          <p class="muted-text">Tekan tombol di bawah atau tombol <strong>P</strong> untuk melanjutkan misi.</p>
+          <div class="btn-row">
+            <button id="btn-resume-game" type="button" class="btn-primary">Lanjutkan</button>
+            <button id="btn-restart-pause" type="button" class="btn-secondary">Ulangi Misi</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- OVERLAY 3: LAYAR GAME OVER -->
+      <div id="overlay-gameover" class="canvas-overlay hidden">
+        <div class="overlay-card">
+          <span id="new-record-badge" class="badge-gold hidden">★ REKOR SKOR TERTINGGI BARU!</span>
+          <h2 class="text-rose">Server Terobos (Game Over)</h2>
+
+          <div class="summary-grid">
+            <div class="summary-box">
+              <span>Skor Akhir</span>
+              <strong id="final-score">0</strong>
+            </div>
+            <div class="summary-box">
+              <span>Wave Dicapai</span>
+              <strong id="final-wave">1</strong>
+            </div>
+            <div class="summary-box">
+              <span>Paket Aman</span>
+              <strong id="final-packets">0</strong>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button id="btn-play-again" type="button" class="btn-primary">Main Lagi</button>
+            <button id="btn-view-scores" type="button" class="btn-secondary">Lihat Papan Skor</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- KONTROL SENTUH UNTUK MOBILE / TABLET -->
+    <section class="mobile-controls" aria-label="Kontrol Layar Sentuh">
+      <button id="btn-touch-left" type="button" class="touch-btn">◀ Kiri</button>
+      <button id="btn-touch-fire" type="button" class="touch-btn touch-fire">⚡ TEMBAK</button>
+      <button id="btn-touch-right" type="button" class="touch-btn">Kanan ▶</button>
+    </section>
+
+    <footer class="game-footer">
+      <span>Arsitektur Modular: HTML5 Canvas • CSS3 • Web Audio API • LocalStorage</span>
+    </footer>
+  </div>
+
+  <!-- MODAL LEADERBOARD TOP 5 -->
+  <div id="leaderboard-modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>🏆 Papan Peringkat Operator (Top 5)</h3>
+        <button id="btn-close-leaderboard" type="button" class="icon-close">✕</button>
+      </div>
+      <div class="table-wrap">
+        <table class="score-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Operator</th>
+              <th>Mode</th>
+              <th>Wave</th>
+              <th class="text-right">Skor</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-tbody"></tbody>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button id="btn-reset-scores" type="button" class="btn-danger-outline">Reset Papan Skor</button>
+        <button id="btn-close-leaderboard-bottom" type="button" class="btn-secondary">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- URUTAN PEMANGGILAN MODUL JAVASCRIPT -->
+  <script src="audio.js"></script>
+  <script src="storage.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
